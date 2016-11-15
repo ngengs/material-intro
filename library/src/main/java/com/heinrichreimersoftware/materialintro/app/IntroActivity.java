@@ -469,11 +469,16 @@ public class IntroActivity extends AppCompatActivity {
                 setResult(RESULT_OK, returnIntent);
             else
                 setResult(RESULT_OK);
+            onFinish();
             finish();
             overridePendingTransition(0, 0);
             return true;
         }
         return false;
+    }
+
+    public void onFinish(){
+
     }
 
     @Nullable
