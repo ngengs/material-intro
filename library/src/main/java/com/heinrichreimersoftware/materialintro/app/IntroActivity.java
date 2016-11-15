@@ -470,15 +470,14 @@ public class IntroActivity extends AppCompatActivity {
             else
                 setResult(RESULT_OK);
             onFinish();
-            finish();
-            overridePendingTransition(0, 0);
             return true;
         }
         return false;
     }
 
     public void onFinish(){
-
+        finish();
+        overridePendingTransition(0, 0);
     }
 
     @Nullable
