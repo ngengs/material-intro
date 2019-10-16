@@ -18,7 +18,7 @@ package com.heinrichreimersoftware.materialintro.util;
 
 import android.content.Context;
 import android.os.Build;
-import android.support.v4.view.animation.FastOutSlowInInterpolator;
+import androidx.interpolator.view.animation.FastOutSlowInInterpolator;
 import android.view.View;
 import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
@@ -31,17 +31,17 @@ import com.heinrichreimersoftware.materialintro.R;
  */
 public class AnimUtils {
 
-    private AnimUtils() { }
+    private AnimUtils() {
+    }
 
     private static Interpolator fastOutSlowIn;
 
     public static Interpolator getFastOutSlowInInterpolator(Context context) {
         if (fastOutSlowIn == null) {
-            if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
                 fastOutSlowIn = AnimationUtils.loadInterpolator(context,
                         android.R.interpolator.fast_out_slow_in);
-            }
-            else {
+            } else {
                 fastOutSlowIn = new FastOutSlowInInterpolator();
             }
         }
@@ -50,7 +50,7 @@ public class AnimUtils {
 
     public static void applyShakeAnimation(Context context, View view) {
         Animation shake;
-        shake = AnimationUtils.loadAnimation(context, R.anim.shake);
+        shake = AnimationUtils.loadAnimation(context, R.anim.mi_shake);
         view.startAnimation(shake);
     }
 }

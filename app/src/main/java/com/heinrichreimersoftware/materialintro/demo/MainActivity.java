@@ -1,62 +1,74 @@
+/*
+ * MIT License
+ *
+ * Copyright (c) 2017 Jan Heinrich Reimer
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
+ */
+
 package com.heinrichreimersoftware.materialintro.demo;
 
 import android.content.Intent;
+import androidx.databinding.DataBindingUtil;
 import android.net.Uri;
 import android.os.Bundle;
-import android.support.v7.app.AppCompatActivity;
-import android.support.v7.widget.Toolbar;
+import androidx.appcompat.app.AppCompatActivity;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
-import android.widget.Button;
-import android.widget.CheckBox;
 
-import butterknife.BindView;
-import butterknife.ButterKnife;
+import com.heinrichreimersoftware.materialintro.demo.databinding.ActivityMainBinding;
 
 public class MainActivity extends AppCompatActivity {
 
-    @BindView(R.id.toolbar) Toolbar toolbar;
-    @BindView(R.id.start_intro) Button startIntro;
-    @BindView(R.id.start_canteen) Button startCanteen;
-    @BindView(R.id.start_splash) Button startSplash;
-    @BindView(R.id.option_fullscreen) CheckBox optionFullscreen;
-    @BindView(R.id.option_scrollable) CheckBox optionScrollable;
-    @BindView(R.id.option_custom_fragments) CheckBox optionCustomFragments;
-    @BindView(R.id.option_permissions) CheckBox optionPermissions;
-    @BindView(R.id.option_show_back) CheckBox optionShowBack;
-    @BindView(R.id.option_show_next) CheckBox optionShowNext;
-    @BindView(R.id.option_skip_enabled) CheckBox optionSkipEnabled;
-    @BindView(R.id.option_finish_enabled) CheckBox optionFinishEnabled;
-    @BindView(R.id.option_get_started_enabled) CheckBox optionGetStartedEnabled;
+    private ActivityMainBinding binding;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
-        ButterKnife.bind(this);
+        binding = DataBindingUtil.setContentView(this, R.layout.activity_main);
 
-        setSupportActionBar(toolbar);
+        setSupportActionBar(binding.toolbar);
 
-        startIntro.setOnClickListener(new View.OnClickListener() {
+        binding.startIntro.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 Intent intent = new Intent(MainActivity.this, MainIntroActivity.class);
-                intent.putExtra(MainIntroActivity.EXTRA_FULLSCREEN, optionFullscreen.isChecked());
-                intent.putExtra(MainIntroActivity.EXTRA_SCROLLABLE, optionScrollable.isChecked());
-                intent.putExtra(MainIntroActivity.EXTRA_CUSTOM_FRAGMENTS, optionCustomFragments.isChecked());
-                intent.putExtra(MainIntroActivity.EXTRA_PERMISSIONS, optionPermissions.isChecked());
-                intent.putExtra(MainIntroActivity.EXTRA_SKIP_ENABLED, optionSkipEnabled.isChecked());
-                intent.putExtra(MainIntroActivity.EXTRA_SHOW_BACK, optionShowBack.isChecked());
-                intent.putExtra(MainIntroActivity.EXTRA_SHOW_NEXT, optionShowNext.isChecked());
-                intent.putExtra(MainIntroActivity.EXTRA_FINISH_ENABLED, optionFinishEnabled.isChecked());
-                intent.putExtra(MainIntroActivity.EXTRA_GET_STARTED_ENABLED, optionGetStartedEnabled.isChecked());
+                intent.putExtra(MainIntroActivity.EXTRA_FULLSCREEN, binding.optionFullscreen.isChecked());
+                intent.putExtra(MainIntroActivity.EXTRA_SCROLLABLE, binding.optionScrollable.isChecked());
+                intent.putExtra(MainIntroActivity.EXTRA_CUSTOM_FRAGMENTS,
+                        binding.optionCustomFragments.isChecked());
+                intent.putExtra(MainIntroActivity.EXTRA_PERMISSIONS, binding.optionPermissions.isChecked());
+                intent
+                        .putExtra(MainIntroActivity.EXTRA_SKIP_ENABLED, binding.optionSkipEnabled.isChecked());
+                intent.putExtra(MainIntroActivity.EXTRA_SHOW_BACK, binding.optionShowBack.isChecked());
+                intent.putExtra(MainIntroActivity.EXTRA_SHOW_NEXT, binding.optionShowNext.isChecked());
+                intent.putExtra(MainIntroActivity.EXTRA_FINISH_ENABLED,
+                        binding.optionFinishEnabled.isChecked());
+                intent.putExtra(MainIntroActivity.EXTRA_GET_STARTED_ENABLED,
+                        binding.optionGetStartedEnabled.isChecked());
                 startActivity(intent);
             }
         });
 
-        startCanteen.setOnClickListener(new View.OnClickListener() {
+        binding.startCanteen.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 Intent intent = new Intent(MainActivity.this, CanteenIntroActivity.class);
@@ -64,7 +76,7 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        startSplash.setOnClickListener(new View.OnClickListener() {
+        binding.startSplash.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 Intent intent = new Intent(MainActivity.this, SplashActivity.class);
@@ -83,7 +95,8 @@ public class MainActivity extends AppCompatActivity {
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         if (item.getItemId() == R.id.menu_item_github) {
-            Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse("https://github.com/HeinrichReimer/material-intro"));
+            Intent intent = new Intent(Intent.ACTION_VIEW,
+                    Uri.parse("https://github.com/HeinrichReimer/material-intro"));
             startActivity(intent);
             return true;
         }

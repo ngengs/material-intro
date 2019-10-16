@@ -1,3 +1,27 @@
+/*
+ * MIT License
+ *
+ * Copyright (c) 2017 Jan Heinrich Reimer
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
+ */
+
 package com.heinrichreimersoftware.materialintro.app;
 
 import android.animation.Animator;
@@ -19,23 +43,24 @@ import android.graphics.drawable.LayerDrawable;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
-import android.support.annotation.ColorInt;
-import android.support.annotation.ColorRes;
-import android.support.annotation.IntDef;
-import android.support.annotation.IntRange;
-import android.support.annotation.InterpolatorRes;
-import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
-import android.support.annotation.StringRes;
-import android.support.v4.app.Fragment;
-import android.support.v4.app.FragmentManager;
-import android.support.v4.content.ContextCompat;
-import android.support.v4.graphics.ColorUtils;
-import android.support.v4.graphics.drawable.DrawableCompat;
-import android.support.v4.util.Pair;
-import android.support.v4.view.ViewCompat;
-import android.support.v4.view.ViewPager;
-import android.support.v7.app.AppCompatActivity;
+import androidx.annotation.ColorInt;
+import androidx.annotation.ColorRes;
+import androidx.annotation.IntDef;
+import androidx.annotation.IntRange;
+import androidx.annotation.InterpolatorRes;
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.annotation.StringRes;
+import androidx.constraintlayout.widget.ConstraintLayout;
+import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentManager;
+import androidx.core.content.ContextCompat;
+import androidx.core.graphics.ColorUtils;
+import androidx.core.graphics.drawable.DrawableCompat;
+import androidx.core.util.Pair;
+import androidx.core.view.ViewCompat;
+import androidx.viewpager.widget.ViewPager;
+import androidx.appcompat.app.AppCompatActivity;
 import android.text.TextUtils;
 import android.util.TypedValue;
 import android.view.View;
@@ -46,7 +71,6 @@ import android.view.animation.AnimationUtils;
 import android.view.animation.Interpolator;
 import android.widget.Button;
 import android.widget.ImageButton;
-import android.widget.LinearLayout;
 import android.widget.TextSwitcher;
 
 import com.heinrichreimersoftware.materialintro.R;
@@ -66,7 +90,7 @@ import java.util.Collection;
 import java.util.List;
 
 @SuppressLint("Registered")
-public class IntroActivity extends AppCompatActivity {
+public class IntroActivity extends AppCompatActivity implements IntroNavigation {
     private static final String KEY_CURRENT_ITEM =
             "com.heinrichreimersoftware.materialintro.app.IntroActivity.KEY_CURRENT_ITEM";
     private static final String KEY_FULLSCREEN =
@@ -74,11 +98,21 @@ public class IntroActivity extends AppCompatActivity {
     private static final String KEY_BUTTON_CTA_VISIBLE =
             "com.heinrichreimersoftware.materialintro.app.IntroActivity.KEY_BUTTON_CTA_VISIBLE";
 
+    private boolean activityCreated = false;
+
+    private ConstraintLayout miFrame;
+    private FadeableViewPager miPager;
+    private InkPageIndicator miPagerIndicator;
+    private TextSwitcher miButtonCta;
+    private ImageButton miButtonBack;
+    private ImageButton miButtonNext;
+
     //Settings constants
     @IntDef({BUTTON_NEXT_FUNCTION_NEXT, BUTTON_NEXT_FUNCTION_NEXT_FINISH})
     @Retention(RetentionPolicy.SOURCE)
     @interface ButtonNextFunction {
     }
+
     public static final int BUTTON_NEXT_FUNCTION_NEXT = 1;
     public static final int BUTTON_NEXT_FUNCTION_NEXT_FINISH = 2;
 
@@ -86,6 +120,7 @@ public class IntroActivity extends AppCompatActivity {
     @Retention(RetentionPolicy.SOURCE)
     @interface ButtonBackFunction {
     }
+
     public static final int BUTTON_BACK_FUNCTION_BACK = 1;
     public static final int BUTTON_BACK_FUNCTION_SKIP = 2;
 
@@ -93,6 +128,7 @@ public class IntroActivity extends AppCompatActivity {
     @Retention(RetentionPolicy.SOURCE)
     @interface ButtonCtaTintMode {
     }
+
     public static final int BUTTON_CTA_TINT_MODE_BACKGROUND = 1;
     public static final int BUTTON_CTA_TINT_MODE_TEXT = 2;
 
@@ -103,14 +139,11 @@ public class IntroActivity extends AppCompatActivity {
     public static final Interpolator ACCELERATE_DECELERATE_INTERPOLATOR = new AccelerateDecelerateInterpolator();
 
     private final ArgbEvaluator evaluator = new ArgbEvaluator();
-    private LinearLayout frame;
-    private FadeableViewPager pager;
-    private TextSwitcher buttonCta;
-    private InkPageIndicator pagerIndicator;
-    private ImageButton buttonNext;
-    private ImageButton buttonBack;
+
     private SlideAdapter adapter;
+
     private IntroPageChangeListener listener = new IntroPageChangeListener();
+
     private int position = 0;
     private float positionOffset = 0;
 
@@ -162,26 +195,28 @@ public class IntroActivity extends AppCompatActivity {
                 setSystemUiFlags(View.SYSTEM_UI_FLAG_LAYOUT_STABLE |
                         View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN, true);
                 updateFullscreen();
-            }
-            else {
+            } else {
                 getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN,
                         WindowManager.LayoutParams.FLAG_FULLSCREEN);
             }
         }
 
         getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE);
-        setContentView(R.layout.activity_intro);
-        findViews();
+
+        setContentView(R.layout.mi_activity_intro);
+        initViews();
     }
 
     @Override
     protected void onPostCreate(Bundle savedInstanceState) {
         super.onPostCreate(savedInstanceState);
+        activityCreated = true;
+
         updateTaskDescription();
         updateButtonNextDrawable();
         updateButtonBackDrawable();
         updateScrollPositions();
-        frame.addOnLayoutChangeListener(new View.OnLayoutChangeListener() {
+        miFrame.addOnLayoutChangeListener(new View.OnLayoutChangeListener() {
             @Override
             public void onLayoutChange(View v, int left, int top, int right, int bottom,
                                        int oldLeft, int oldTop, int oldRight, int oldBottom) {
@@ -205,7 +240,7 @@ public class IntroActivity extends AppCompatActivity {
 
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions,
-            @NonNull int[] grantResults) {
+                                           @NonNull int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
         updateButtonCta();
     }
@@ -213,7 +248,7 @@ public class IntroActivity extends AppCompatActivity {
     @Override
     protected void onSaveInstanceState(Bundle outState) {
         super.onSaveInstanceState(outState);
-        outState.putInt(KEY_CURRENT_ITEM, pager.getCurrentItem());
+        outState.putInt(KEY_CURRENT_ITEM, miPager.getCurrentItem());
         outState.putBoolean(KEY_FULLSCREEN, fullscreen);
         outState.putBoolean(KEY_BUTTON_CTA_VISIBLE, buttonCtaVisible);
     }
@@ -238,12 +273,15 @@ public class IntroActivity extends AppCompatActivity {
 
     @Override
     protected void onDestroy() {
-        if (isAutoplaying())
+        if (isAutoplaying()) {
             cancelAutoplay();
+        }
+
+        activityCreated = false;
         super.onDestroy();
     }
 
-    private void setSystemUiFlags(int flags, boolean value){
+    private void setSystemUiFlags(int flags, boolean value) {
         int systemUiVisibility = getWindow().getDecorView().getSystemUiVisibility();
         if (value) {
             systemUiVisibility |= flags;
@@ -254,7 +292,7 @@ public class IntroActivity extends AppCompatActivity {
     }
 
     @TargetApi(Build.VERSION_CODES.JELLY_BEAN)
-    private void setFullscreenFlags(boolean fullscreen){
+    private void setFullscreenFlags(boolean fullscreen) {
         int fullscreenFlags = View.SYSTEM_UI_FLAG_FULLSCREEN;
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
             fullscreenFlags |= View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY;
@@ -263,61 +301,79 @@ public class IntroActivity extends AppCompatActivity {
         setSystemUiFlags(fullscreenFlags, fullscreen);
     }
 
-    private void findViews(){
-        frame = (LinearLayout) findViewById(R.id.mi_frame);
-        pager = (FadeableViewPager) findViewById(R.id.mi_pager);
-        pagerIndicator = (InkPageIndicator) findViewById(R.id.mi_pager_indicator);
-        buttonNext = (ImageButton) findViewById(R.id.mi_button_next);
-        buttonBack = (ImageButton) findViewById(R.id.mi_button_skip);
+    private void initViews() {
+        // bind views
+        miFrame = findViewById(R.id.mi_frame);
+        miPager = findViewById(R.id.mi_pager);
+        miPagerIndicator = findViewById(R.id.mi_pager_indicator);
+        miButtonCta = findViewById(R.id.mi_button_cta);
+        miButtonBack = findViewById(R.id.mi_button_back);
+        miButtonNext = findViewById(R.id.mi_button_next);
 
-        buttonCta = (TextSwitcher) findViewById(R.id.mi_button_cta);
-        if (buttonCta != null) {
-            buttonCta.setInAnimation(this, R.anim.fade_in);
-            buttonCta.setOutAnimation(this, R.anim.fade_out);
+        if (miButtonCta != null) {
+            miButtonCta.setInAnimation(this, R.anim.mi_fade_in);
+            miButtonCta.setOutAnimation(this, R.anim.mi_fade_out);
         }
 
         FragmentManager fragmentManager = getSupportFragmentManager();
         adapter = new SlideAdapter(fragmentManager);
 
-        pager.setAdapter(adapter);
-        pager.addOnPageChangeListener(listener);
-        pager.setCurrentItem(position, false);
+        miPager.setAdapter(adapter);
+        miPager.addOnPageChangeListener(listener);
+        miPager.setCurrentItem(position, false);
 
-        pagerIndicator.setViewPager(pager);
+        miPagerIndicator.setViewPager(miPager);
 
-        buttonNext.setOnClickListener(new View.OnClickListener() {
+        resetButtonNextOnClickListener();
+        resetButtonBackOnClickListener();
+
+        CheatSheet.setup(miButtonNext);
+        CheatSheet.setup(miButtonBack);
+    }
+
+    public void setButtonNextOnClickListener(View.OnClickListener onClickListener) {
+        miButtonNext.setOnClickListener(onClickListener);
+    }
+
+    public void setButtonBackOnClickListener(View.OnClickListener onClickListener) {
+        miButtonBack.setOnClickListener(onClickListener);
+    }
+
+    public void resetButtonNextOnClickListener() {
+        miButtonNext.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 nextSlide();
             }
         });
-        buttonBack.setOnClickListener(new View.OnClickListener() {
+    }
+
+    public void resetButtonBackOnClickListener() {
+        miButtonBack.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 performButtonBackPress();
             }
         });
-        CheatSheet.setup(buttonNext);
-        CheatSheet.setup(buttonBack);
     }
 
     private void smoothScrollPagerTo(final int position) {
-        if (pager.isFakeDragging())
+        if (miPager.isFakeDragging())
             return;
 
-        ValueAnimator animator = ValueAnimator.ofFloat(pager.getCurrentItem(), position);
+        ValueAnimator animator = ValueAnimator.ofFloat(miPager.getCurrentItem(), position);
         animator.addListener(new AnimatorListenerAdapter() {
             @Override
             public void onAnimationEnd(Animator animation) {
-                if (pager.isFakeDragging())
-                    pager.endFakeDrag();
-                pager.setCurrentItem(position);
+                if (miPager.isFakeDragging())
+                    miPager.endFakeDrag();
+                miPager.setCurrentItem(position);
             }
 
             @Override
             public void onAnimationCancel(Animator animation) {
-                if (pager.isFakeDragging())
-                    pager.endFakeDrag();
+                if (miPager.isFakeDragging())
+                    miPager.endFakeDrag();
             }
         });
         animator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
@@ -330,26 +386,25 @@ public class IntroActivity extends AppCompatActivity {
 
             private boolean fakeDragToPosition(float position) {
                 // The following mimics the underlying calculations in ViewPager
-                float scrollX = pager.getScrollX();
-                int pagerWidth = pager.getWidth();
-                int currentPosition = pager.getCurrentItem();
+                float scrollX = miPager.getScrollX();
+                int pagerWidth = miPager.getWidth();
+                int currentPosition = miPager.getCurrentItem();
 
                 if (position > currentPosition && Math.floor(position) != currentPosition && position % 1 != 0) {
-                    pager.setCurrentItem((int) Math.floor(position), false);
-                }
-                else if (position < currentPosition && Math.ceil(position) != currentPosition && position % 1 != 0) {
-                    pager.setCurrentItem((int) Math.ceil(position), false);
+                    miPager.setCurrentItem((int) Math.floor(position), false);
+                } else if (position < currentPosition && Math.ceil(position) != currentPosition && position % 1 != 0) {
+                    miPager.setCurrentItem((int) Math.ceil(position), false);
                 }
 
-                if (!pager.isFakeDragging() && !pager.beginFakeDrag())
+                if (!miPager.isFakeDragging() && !miPager.beginFakeDrag())
                     return false;
 
-                pager.fakeDragBy(scrollX - pagerWidth * position);
+                miPager.fakeDragBy(scrollX - pagerWidth * position);
                 return true;
             }
         });
 
-        int distance = Math.abs(position - pager.getCurrentItem());
+        int distance = Math.abs(position - miPager.getCurrentItem());
 
         animator.setInterpolator(pageScrollInterpolator);
         animator.setDuration(calculateScrollDuration(distance));
@@ -360,42 +415,79 @@ public class IntroActivity extends AppCompatActivity {
         return Math.round(pageScrollDuration * (distance + Math.sqrt(distance)) / 2);
     }
 
-    public void nextSlide() {
-        int currentItem = pager.getCurrentItem();
-        if (currentItem > adapter.getCount() - 1) finishIfNeeded();
+    @Override
+    public boolean goToSlide(int position) {
+        int lastPosition = miPager.getCurrentItem();
 
-        if (canGoForward(currentItem, true)) {
-            smoothScrollPagerTo(++currentItem);
+        if (lastPosition >= adapter.getCount()) {
+            finishIfNeeded();
         }
-        else {
-            AnimUtils.applyShakeAnimation(this, buttonNext);
+
+        int newPosition = lastPosition;
+
+        position = Math.max(0, Math.min(position, getCount()));
+
+        if (position > lastPosition) {
+            // Go forward
+            while (newPosition < position && canGoForward(newPosition, true)) {
+                newPosition++;
+            }
+        } else if (position < lastPosition) {
+            // Go backward
+            while (newPosition > position && canGoBackward(newPosition, true)) {
+                newPosition--;
+            }
+        } else {
+            // Noting to do here
+            return true;
         }
+
+        boolean blocked = false;
+        if (newPosition != position) {
+            // Could not go the complete way to the given position.
+            blocked = true;
+
+            if (position > lastPosition) {
+                AnimUtils.applyShakeAnimation(this, miButtonNext);
+            } else if (position < lastPosition) {
+                AnimUtils.applyShakeAnimation(this, miButtonBack);
+            }
+        }
+
+        // Scroll to new position
+        smoothScrollPagerTo(newPosition);
+
+        return !blocked;
+    }
+
+    @Override
+    public boolean nextSlide() {
+        int currentItem = miPager.getCurrentItem();
+        return goToSlide(currentItem + 1);
     }
 
     private int nextSlideAuto() {
-        int endPosition = pager.getCurrentItem();
+        int lastPosition = miPager.getCurrentItem();
         int count = getCount();
 
         if (count == 1) {
             return 0;
-        }
-        else if (pager.getCurrentItem() >= count - 1) {
-            while (endPosition >= 0 && canGoBackward(endPosition, true)) {
-                endPosition--;
+        } else if (miPager.getCurrentItem() >= count - 1) {
+            while (lastPosition >= 0 && canGoBackward(lastPosition, true)) {
+                lastPosition--;
             }
             if (autoplayCounter > 0)
                 autoplayCounter--;
-        }
-        else if (canGoForward(endPosition, true)) {
-            endPosition++;
+        } else if (canGoForward(lastPosition, true)) {
+            lastPosition++;
         }
 
-        int distance = Math.abs(endPosition - pager.getCurrentItem());
+        int distance = Math.abs(lastPosition - miPager.getCurrentItem());
 
-        if (endPosition == pager.getCurrentItem())
+        if (lastPosition == miPager.getCurrentItem())
             return 0;
 
-        smoothScrollPagerTo(endPosition);
+        smoothScrollPagerTo(lastPosition);
 
         if (autoplayCounter == 0)
             return 0;
@@ -403,35 +495,37 @@ public class IntroActivity extends AppCompatActivity {
 
     }
 
-    public void previousSlide() {
-        int currentItem = pager.getCurrentItem();
-        if (currentItem <= 0) return;
+    @Override
+    public boolean previousSlide() {
+        int currentItem = miPager.getCurrentItem();
+        return goToSlide(currentItem - 1);
+    }
 
-        if (canGoBackward(currentItem, true)) {
-            smoothScrollPagerTo(--currentItem);
-        }
-        else {
-            AnimUtils.applyShakeAnimation(this, buttonBack);
+    @Override
+    public boolean goToLastSlide() {
+        return goToSlide(getCount() - 1);
+    }
 
-        }
+    @Override
+    public boolean goToFirstSlide() {
+        return goToSlide(0);
     }
 
     private void performButtonBackPress() {
         if (buttonBackFunction == BUTTON_BACK_FUNCTION_SKIP) {
-            int count = getCount();
-            int endPosition = pager.getCurrentItem();
-            while (endPosition < count && canGoForward(endPosition, true)) {
-                endPosition++;
-            }
-            smoothScrollPagerTo(endPosition);
+            goToSlide(getCount());
         } else if (buttonBackFunction == BUTTON_BACK_FUNCTION_BACK) {
             previousSlide();
         }
     }
 
     private boolean canGoForward(int position, boolean notifyListeners) {
-        if (position >= getCount())
+        if (position >= getCount()) {
             return false;
+        }
+        if (position < 0) {
+            return true;
+        }
 
         if (buttonNextFunction == BUTTON_NEXT_FUNCTION_NEXT && position >= getCount() - 1)
             //Block finishing when button "next" function is not "finish".
@@ -448,8 +542,12 @@ public class IntroActivity extends AppCompatActivity {
     }
 
     private boolean canGoBackward(int position, boolean notifyListeners) {
-        if (position <= 0)
+        if (position <= 0) {
             return false;
+        }
+        if (position >= getCount()) {
+            return true;
+        }
 
         boolean canGoBackward = (navigationPolicy == null || navigationPolicy.canGoBackward(position)) &&
                 getSlide(position).canGoBackward();
@@ -502,8 +600,7 @@ public class IntroActivity extends AppCompatActivity {
             }
             if (!TextUtils.isEmpty(buttonCtaLabel)) {
                 return Pair.create(buttonCtaLabel, new ButtonCtaClickListener());
-            }
-            else {
+            } else {
                 return Pair.create((CharSequence) getString(R.string.mi_label_button_cta),
                         new ButtonCtaClickListener());
             }
@@ -512,7 +609,7 @@ public class IntroActivity extends AppCompatActivity {
     }
 
     private void updateTaskDescription() {
-        if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP){
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
             String title = getTitle().toString();
             Drawable iconDrawable = getApplicationInfo().loadIcon(getPackageManager());
             Bitmap icon = iconDrawable instanceof BitmapDrawable ? ((BitmapDrawable) iconDrawable).getBitmap() : null;
@@ -523,8 +620,7 @@ public class IntroActivity extends AppCompatActivity {
                 } catch (Resources.NotFoundException e) {
                     colorPrimary = ContextCompat.getColor(IntroActivity.this, getBackground(position));
                 }
-            }
-            else {
+            } else {
                 TypedValue typedValue = new TypedValue();
                 TypedArray a = obtainStyledAttributes(typedValue.data, new int[]{R.attr.colorPrimary});
                 colorPrimary = a.getColor(0, 0);
@@ -584,22 +680,22 @@ public class IntroActivity extends AppCompatActivity {
         background = (Integer) evaluator.evaluate(positionOffset, background, backgroundNext);
         backgroundDark = (Integer) evaluator.evaluate(positionOffset, backgroundDark, backgroundDarkNext);
 
-        frame.setBackgroundColor(background);
+        miFrame.setBackgroundColor(background);
 
         float[] backgroundDarkHsv = new float[3];
         Color.colorToHSV(backgroundDark, backgroundDarkHsv);
         //Slightly darken the background color a bit for more contrast
         backgroundDarkHsv[2] *= 0.95;
         int backgroundDarker = Color.HSVToColor(backgroundDarkHsv);
-        pagerIndicator.setPageIndicatorColor(backgroundDarker);
-        ViewCompat.setBackgroundTintList(buttonNext, ColorStateList.valueOf(backgroundDarker));
-        ViewCompat.setBackgroundTintList(buttonBack, ColorStateList.valueOf(backgroundDarker));
+        miPagerIndicator.setPageIndicatorColor(backgroundDarker);
+        ViewCompat.setBackgroundTintList(miButtonNext, ColorStateList.valueOf(backgroundDarker));
+        ViewCompat.setBackgroundTintList(miButtonBack, ColorStateList.valueOf(backgroundDarker));
 
         @ColorInt
         int backgroundButtonCta = buttonCtaTintMode == BUTTON_CTA_TINT_MODE_TEXT ?
                 ContextCompat.getColor(this, android.R.color.white) : backgroundDarker;
-        ViewCompat.setBackgroundTintList(buttonCta.getChildAt(0), ColorStateList.valueOf(backgroundButtonCta));
-        ViewCompat.setBackgroundTintList(buttonCta.getChildAt(1), ColorStateList.valueOf(backgroundButtonCta));
+        ViewCompat.setBackgroundTintList(miButtonCta.getChildAt(0), ColorStateList.valueOf(backgroundButtonCta));
+        ViewCompat.setBackgroundTintList(miButtonCta.getChildAt(1), ColorStateList.valueOf(backgroundButtonCta));
 
         int iconColor;
         if (ColorUtils.calculateLuminance(backgroundDark) > 0.4) {
@@ -609,15 +705,15 @@ public class IntroActivity extends AppCompatActivity {
             //Dark background
             iconColor = ContextCompat.getColor(this, R.color.mi_icon_color_dark);
         }
-        pagerIndicator.setCurrentPageIndicatorColor(iconColor);
-        DrawableCompat.setTint(buttonNext.getDrawable(), iconColor);
-        DrawableCompat.setTint(buttonBack.getDrawable(), iconColor);
+        miPagerIndicator.setCurrentPageIndicatorColor(iconColor);
+        DrawableCompat.setTint(miButtonNext.getDrawable(), iconColor);
+        DrawableCompat.setTint(miButtonBack.getDrawable(), iconColor);
 
         @ColorInt
         int textColorButtonCta = buttonCtaTintMode == BUTTON_CTA_TINT_MODE_TEXT ?
                 backgroundDarker : iconColor;
-        ((Button) buttonCta.getChildAt(0)).setTextColor(textColorButtonCta);
-        ((Button) buttonCta.getChildAt(1)).setTextColor(textColorButtonCta);
+        ((Button) miButtonCta.getChildAt(0)).setTextColor(textColorButtonCta);
+        ((Button) miButtonCta.getChildAt(1)).setTextColor(textColorButtonCta);
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
             getWindow().setStatusBarColor(backgroundDark);
@@ -663,55 +759,51 @@ public class IntroActivity extends AppCompatActivity {
             if (button == null) {
                 if (buttonNext == null) {
                     //Hide button
-                    buttonCta.setVisibility(View.GONE);
-                }
-                else {
-                    buttonCta.setVisibility(View.VISIBLE);
+                    miButtonCta.setVisibility(View.GONE);
+                } else {
+                    miButtonCta.setVisibility(View.VISIBLE);
                     //Fade in
-                    if (!((Button) buttonCta.getCurrentView()).getText().equals(buttonNext.first))
-                        buttonCta.setText(buttonNext.first);
-                    buttonCta.getChildAt(0).setOnClickListener(buttonNext.second);
-                    buttonCta.getChildAt(1).setOnClickListener(buttonNext.second);
-                    buttonCta.setAlpha(positionOffset);
-                    buttonCta.setScaleX(positionOffset);
-                    buttonCta.setScaleY(positionOffset);
-                    ViewGroup.LayoutParams layoutParams = buttonCta.getLayoutParams();
+                    if (!((Button) miButtonCta.getCurrentView()).getText().equals(buttonNext.first))
+                        miButtonCta.setText(buttonNext.first);
+                    miButtonCta.getChildAt(0).setOnClickListener(buttonNext.second);
+                    miButtonCta.getChildAt(1).setOnClickListener(buttonNext.second);
+                    miButtonCta.setAlpha(positionOffset);
+                    miButtonCta.setScaleX(positionOffset);
+                    miButtonCta.setScaleY(positionOffset);
+                    ViewGroup.LayoutParams layoutParams = miButtonCta.getLayoutParams();
                     layoutParams.height = Math.round(getResources().getDimensionPixelSize(R.dimen.mi_button_cta_height) * ACCELERATE_DECELERATE_INTERPOLATOR.getInterpolation(positionOffset));
-                    buttonCta.setLayoutParams(layoutParams);
+                    miButtonCta.setLayoutParams(layoutParams);
                 }
-            }
-            else {
+            } else {
                 if (buttonNext == null) {
-                    buttonCta.setVisibility(View.VISIBLE);
+                    miButtonCta.setVisibility(View.VISIBLE);
                     //Fade out
-                    if (!((Button) buttonCta.getCurrentView()).getText().equals(button.first))
-                        buttonCta.setText(button.first);
-                    buttonCta.getChildAt(0).setOnClickListener(button.second);
-                    buttonCta.getChildAt(1).setOnClickListener(button.second);
-                    buttonCta.setAlpha(1 - positionOffset);
-                    buttonCta.setScaleX(1 - positionOffset);
-                    buttonCta.setScaleY(1 - positionOffset);
-                    ViewGroup.LayoutParams layoutParams = buttonCta.getLayoutParams();
+                    if (!((Button) miButtonCta.getCurrentView()).getText().equals(button.first))
+                        miButtonCta.setText(button.first);
+                    miButtonCta.getChildAt(0).setOnClickListener(button.second);
+                    miButtonCta.getChildAt(1).setOnClickListener(button.second);
+                    miButtonCta.setAlpha(1 - positionOffset);
+                    miButtonCta.setScaleX(1 - positionOffset);
+                    miButtonCta.setScaleY(1 - positionOffset);
+                    ViewGroup.LayoutParams layoutParams = miButtonCta.getLayoutParams();
                     layoutParams.height = Math.round(getResources().getDimensionPixelSize(R.dimen.mi_button_cta_height) * ACCELERATE_DECELERATE_INTERPOLATOR.getInterpolation(1 - positionOffset));
-                    buttonCta.setLayoutParams(layoutParams);
-                }
-                else {
-                    buttonCta.setVisibility(View.VISIBLE);
-                    ViewGroup.LayoutParams layoutParams = buttonCta.getLayoutParams();
+                    miButtonCta.setLayoutParams(layoutParams);
+                } else {
+                    miButtonCta.setVisibility(View.VISIBLE);
+                    ViewGroup.LayoutParams layoutParams = miButtonCta.getLayoutParams();
                     layoutParams.height = getResources().getDimensionPixelSize(R.dimen.mi_button_cta_height);
-                    buttonCta.setLayoutParams(layoutParams);
+                    miButtonCta.setLayoutParams(layoutParams);
                     //Fade text
                     if (positionOffset >= 0.5f) {
-                        if (!((Button) buttonCta.getCurrentView()).getText().equals(buttonNext.first))
-                            buttonCta.setText(buttonNext.first);
-                        buttonCta.getChildAt(0).setOnClickListener(buttonNext.second);
-                        buttonCta.getChildAt(1).setOnClickListener(buttonNext.second);
-                    }
-                    else {
-                        if (!((Button) buttonCta.getCurrentView()).getText().equals(button.first))
-                            buttonCta.setText(button.first);
-                        buttonCta.getChildAt(0).setOnClickListener(button.second);
-                        buttonCta.getChildAt(1).setOnClickListener(button.second);
+                        if (!((Button) miButtonCta.getCurrentView()).getText().equals(buttonNext.first))
+                            miButtonCta.setText(buttonNext.first);
+                        miButtonCta.getChildAt(0).setOnClickListener(buttonNext.second);
+                        miButtonCta.getChildAt(1).setOnClickListener(buttonNext.second);
+                    } else {
+                        if (!((Button) miButtonCta.getCurrentView()).getText().equals(button.first))
+                            miButtonCta.setText(button.first);
+                        miButtonCta.getChildAt(0).setOnClickListener(button.second);
+                        miButtonCta.getChildAt(1).setOnClickListener(button.second);
                     }
                 }
             }
@@ -719,11 +811,10 @@ public class IntroActivity extends AppCompatActivity {
 
         if (realPosition < adapter.getCount() - 1) {
             //Reset
-            buttonCta.setTranslationY(0);
-        }
-        else {
+            miButtonCta.setTranslationY(0);
+        } else {
             //Hide CTA button
-            buttonCta.setTranslationY(positionOffset * yOffset);
+            miButtonCta.setTranslationY(positionOffset * yOffset);
         }
     }
 
@@ -733,31 +824,28 @@ public class IntroActivity extends AppCompatActivity {
 
         if (realPosition < 1 && buttonBackFunction == BUTTON_BACK_FUNCTION_BACK) {
             //Hide back button
-            buttonBack.setTranslationY((1 - positionOffset) * yOffset);
-        }
-        else if (realPosition < adapter.getCount() - 2) {
+            miButtonBack.setTranslationY((1 - positionOffset) * yOffset);
+        } else if (realPosition < adapter.getCount() - 2) {
             //Reset
-            buttonBack.setTranslationY(0);
-            buttonBack.setTranslationX(0);
-        }
-        else if (realPosition < adapter.getCount() - 1) {
+            miButtonBack.setTranslationY(0);
+            miButtonBack.setTranslationX(0);
+        } else if (realPosition < adapter.getCount() - 1) {
             //Scroll away skip button
             if (buttonBackFunction == BUTTON_BACK_FUNCTION_SKIP) {
                 boolean rtl = Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1 && getResources().getConfiguration().getLayoutDirection() ==
                         View.LAYOUT_DIRECTION_RTL;
-                buttonBack.setTranslationX(positionOffset * (rtl ? 1 : -1) * pager.getWidth());
+                miButtonBack.setTranslationX(positionOffset * (rtl ? 1 : -1) * miPager.getWidth());
             } else {
-                buttonBack.setTranslationX(0);
+                miButtonBack.setTranslationX(0);
             }
-        }
-        else {
+        } else {
             //Keep skip button scrolled away, hide next button
             if (buttonBackFunction == BUTTON_BACK_FUNCTION_SKIP) {
                 boolean rtl = Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1 && getResources().getConfiguration().getLayoutDirection() ==
                         View.LAYOUT_DIRECTION_RTL;
-                buttonBack.setTranslationX((rtl ? 1 : -1) * pager.getWidth());
+                miButtonBack.setTranslationX((rtl ? 1 : -1) * miPager.getWidth());
             } else {
-                buttonBack.setTranslationY(positionOffset * yOffset);
+                miButtonBack.setTranslationY(positionOffset * yOffset);
             }
         }
     }
@@ -768,23 +856,20 @@ public class IntroActivity extends AppCompatActivity {
 
         if (realPosition < adapter.getCount() - 2) {
             //Reset
-            buttonNext.setTranslationY(0);
-        }
-        else if (realPosition < adapter.getCount() - 1) {
+            miButtonNext.setTranslationY(0);
+        } else if (realPosition < adapter.getCount() - 1) {
             //Reset finish button, hide next icon
             if (buttonNextFunction == BUTTON_NEXT_FUNCTION_NEXT_FINISH) {
-                buttonNext.setTranslationY(0);
+                miButtonNext.setTranslationY(0);
+            } else {
+                miButtonNext.setTranslationY(positionOffset * yOffset);
             }
-            else {
-                buttonNext.setTranslationY(positionOffset * yOffset);
-            }
-        }
-        else if (realPosition >= adapter.getCount() - 1) {
+        } else if (realPosition >= adapter.getCount() - 1) {
             //Hide finish icon, keep next icon hidden
             if (buttonNextFunction == BUTTON_NEXT_FUNCTION_NEXT_FINISH) {
-                buttonNext.setTranslationY(positionOffset * yOffset);
+                miButtonNext.setTranslationY(positionOffset * yOffset);
             } else {
-                buttonNext.setTranslationY(-yOffset);
+                miButtonNext.setTranslationY(-yOffset);
             }
         }
     }
@@ -795,11 +880,10 @@ public class IntroActivity extends AppCompatActivity {
 
         if (realPosition < adapter.getCount() - 1) {
             //Reset
-            pagerIndicator.setTranslationY(0);
-        }
-        else {
+            miPagerIndicator.setTranslationY(0);
+        } else {
             //Hide CTA button
-            pagerIndicator.setTranslationY(positionOffset * yOffset);
+            miPagerIndicator.setTranslationY(positionOffset * yOffset);
         }
     }
 
@@ -822,8 +906,7 @@ public class IntroActivity extends AppCompatActivity {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
             if (adapter != null && position + positionOffset > adapter.getCount() - 1) {
                 setFullscreenFlags(false);
-            }
-            else {
+            } else {
                 setFullscreenFlags(fullscreen);
             }
         }
@@ -834,11 +917,10 @@ public class IntroActivity extends AppCompatActivity {
 
         if (realPosition < adapter.getCount() - 1) {
             //Reset
-            frame.setAlpha(1);
-        }
-        else {
+            miFrame.setAlpha(1);
+        } else {
             //Fade background
-            frame.setAlpha(1 - (positionOffset * 0.5f));
+            miFrame.setAlpha(1 - (positionOffset * 0.5f));
         }
     }
 
@@ -860,32 +942,31 @@ public class IntroActivity extends AppCompatActivity {
         if (buttonNextFunction == BUTTON_NEXT_FUNCTION_NEXT_FINISH) {
             if (realPosition >= adapter.getCount() - 1) {
                 offset = 1;
-            }
-            else if (realPosition >= adapter.getCount() - 2) {
+            } else if (realPosition >= adapter.getCount() - 2) {
                 offset = positionOffset;
             }
         }
 
         if (offset <= 0) {
-            buttonNext.setImageResource(R.drawable.ic_next);
-            buttonNext.getDrawable().setAlpha(0xFF);
+            miButtonNext.setImageResource(R.drawable.mi_ic_next);
+            miButtonNext.getDrawable().setAlpha(0xFF);
         } else {
-            buttonNext.setImageResource(R.drawable.ic_next_finish);
-            if (buttonNext.getDrawable() != null && buttonNext.getDrawable() instanceof LayerDrawable) {
-                LayerDrawable drawable = (LayerDrawable) buttonNext.getDrawable();
+            miButtonNext.setImageResource(R.drawable.mi_ic_next_finish);
+            if (miButtonNext.getDrawable() != null && miButtonNext.getDrawable() instanceof LayerDrawable) {
+                LayerDrawable drawable = (LayerDrawable) miButtonNext.getDrawable();
                 drawable.getDrawable(0).setAlpha((int) (0xFF * (1 - offset)));
                 drawable.getDrawable(1).setAlpha((int) (0xFF * offset));
             } else {
-                buttonNext.setImageResource(offset > 0 ? R.drawable.ic_finish : R.drawable.ic_next);
+                miButtonNext.setImageResource(offset > 0 ? R.drawable.mi_ic_finish : R.drawable.mi_ic_next);
             }
         }
     }
 
     private void updateButtonBackDrawable() {
         if (buttonBackFunction == BUTTON_BACK_FUNCTION_SKIP) {
-            buttonBack.setImageResource(R.drawable.ic_skip);
+            miButtonBack.setImageResource(R.drawable.mi_ic_skip);
         } else {
-            buttonBack.setImageResource(R.drawable.ic_previous);
+            miButtonBack.setImageResource(R.drawable.mi_ic_previous);
         }
     }
 
@@ -1004,10 +1085,10 @@ public class IntroActivity extends AppCompatActivity {
         this.buttonBackFunction = buttonBackFunction;
         switch (buttonBackFunction) {
             case BUTTON_BACK_FUNCTION_BACK:
-                CheatSheet.setup(buttonBack, R.string.mi_content_description_back);
+                CheatSheet.setup(miButtonBack, R.string.mi_content_description_back);
                 break;
             case BUTTON_BACK_FUNCTION_SKIP:
-                CheatSheet.setup(buttonBack, R.string.mi_content_description_skip);
+                CheatSheet.setup(miButtonBack, R.string.mi_content_description_skip);
                 break;
         }
         updateButtonBackDrawable();
@@ -1036,14 +1117,18 @@ public class IntroActivity extends AppCompatActivity {
         this.buttonNextFunction = buttonNextFunction;
         switch (buttonNextFunction) {
             case BUTTON_NEXT_FUNCTION_NEXT_FINISH:
-                CheatSheet.setup(buttonNext, R.string.mi_content_description_next_finish);
+                CheatSheet.setup(miButtonNext, R.string.mi_content_description_next_finish);
                 break;
             case BUTTON_NEXT_FUNCTION_NEXT:
-                CheatSheet.setup(buttonNext, R.string.mi_content_description_next);
+                CheatSheet.setup(miButtonNext, R.string.mi_content_description_next);
                 break;
         }
         updateButtonNextDrawable();
         updateButtonNextPosition();
+    }
+
+    public View getContentView() {
+        return findViewById(android.R.id.content);
     }
 
     @Deprecated
@@ -1060,50 +1145,50 @@ public class IntroActivity extends AppCompatActivity {
 
     @SuppressWarnings("unused")
     public boolean isButtonBackVisible() {
-        return buttonBack.getVisibility() == View.VISIBLE;
+        return miButtonBack.getVisibility() == View.VISIBLE;
     }
 
     @SuppressWarnings("unused")
     public void setButtonBackVisible(boolean visible) {
-        buttonBack.setVisibility(visible ? View.VISIBLE : View.INVISIBLE);
+        miButtonBack.setVisibility(visible ? View.VISIBLE : View.INVISIBLE);
     }
 
     @SuppressWarnings("unused")
     public boolean isButtonNextVisible() {
-        return buttonNext.getVisibility() == View.VISIBLE;
+        return miButtonNext.getVisibility() == View.VISIBLE;
     }
 
     @SuppressWarnings("unused")
     public void setButtonNextVisible(boolean visible) {
-        buttonNext.setVisibility(visible ? View.VISIBLE : View.INVISIBLE);
+        miButtonNext.setVisibility(visible ? View.VISIBLE : View.INVISIBLE);
     }
 
     @SuppressWarnings("unused")
     public boolean isPagerIndicatorVisible() {
-        return pagerIndicator.getVisibility() == View.VISIBLE;
+        return miPagerIndicator.getVisibility() == View.VISIBLE;
     }
 
     @SuppressWarnings("unused")
     public void setPagerIndicatorVisible(boolean visible) {
-        pagerIndicator.setVisibility(visible ? View.VISIBLE : View.GONE);
+        miPagerIndicator.setVisibility(visible ? View.VISIBLE : View.GONE);
     }
 
     @Deprecated
     @SuppressWarnings("deprecation,unused")
     public void setOnPageChangeListener(ViewPager.OnPageChangeListener listener) {
-        pager.setOnPageChangeListener(listener);
-        pager.addOnPageChangeListener(this.listener);
+        miPager.setOnPageChangeListener(listener);
+        miPager.addOnPageChangeListener(this.listener);
     }
 
     @SuppressWarnings("unused")
     public void addOnPageChangeListener(ViewPager.OnPageChangeListener listener) {
-        pager.addOnPageChangeListener(listener);
+        miPager.addOnPageChangeListener(listener);
     }
 
     @SuppressWarnings("unused")
     public void removeOnPageChangeListener(ViewPager.OnPageChangeListener listener) {
         if (listener != this.listener)
-            pager.removeOnPageChangeListener(listener);
+            miPager.removeOnPageChangeListener(listener);
     }
 
     @SuppressWarnings("unused")
@@ -1161,8 +1246,8 @@ public class IntroActivity extends AppCompatActivity {
     @SuppressWarnings("unused")
     public void lockSwipeIfNeeded() {
         if (position < getCount()) {
-            pager.setSwipeLeftEnabled(canGoForward(position, false));
-            pager.setSwipeRightEnabled(canGoBackward(position, false));
+            miPager.setSwipeLeftEnabled(canGoForward(position, false));
+            miPager.setSwipeRightEnabled(canGoBackward(position, false));
         }
     }
 
@@ -1221,6 +1306,16 @@ public class IntroActivity extends AppCompatActivity {
     @SuppressWarnings("unused")
     public Slide getSlide(int location) {
         return adapter.getSlide(location);
+    }
+
+    @SuppressWarnings("unused")
+    public int getSlidePosition(Slide slide) {
+        return adapter.getItemPosition(slide);
+    }
+
+    @SuppressWarnings("unused")
+    public int getCurrentSlidePosition() {
+        return miPager.getCurrentItem();
     }
 
     @SuppressWarnings("unused")
@@ -1312,18 +1407,24 @@ public class IntroActivity extends AppCompatActivity {
         notifyDataSetChanged();
         return oldList;
     }
-    
+
     public void setPageTransformer(boolean reverseDrawingOrder, ViewPager.PageTransformer transformer) {
-        pager.setPageTransformer(reverseDrawingOrder, transformer);
+        miPager.setPageTransformer(reverseDrawingOrder, transformer);
     }
 
     public void notifyDataSetChanged() {
-        int position = this.position;
-        pager.setAdapter(adapter);
-        pager.setCurrentItem(position);
-
-        if (finishIfNeeded())
+        if (!activityCreated) {
+            // Don't notify any listener until the activity is created
             return;
+        }
+
+        int position = this.position;
+        miPager.setAdapter(adapter);
+        miPager.setCurrentItem(position);
+
+        if (finishIfNeeded()) {
+            return;
+        }
 
         updateTaskDescription();
         updateButtonBackDrawable();
@@ -1338,8 +1439,9 @@ public class IntroActivity extends AppCompatActivity {
             IntroActivity.this.position = (int) Math.floor(position + positionOffset);
             IntroActivity.this.positionOffset = (((position + positionOffset) % 1) + 1) % 1;
 
-            if (finishIfNeeded())
+            if (finishIfNeeded()) {
                 return;
+            }
 
             //Lock while scrolling a slide near its edges to lock (uncommon) multiple page swipes
             if (Math.abs(positionOffset) < 0.1f) {
@@ -1361,12 +1463,7 @@ public class IntroActivity extends AppCompatActivity {
     private class ButtonCtaClickListener implements View.OnClickListener {
         @Override
         public void onClick(View v) {
-            int count = getCount();
-            int endPosition = pager.getCurrentItem();
-            while (endPosition < count && canGoForward(endPosition, true)) {
-                endPosition++;
-            }
-            smoothScrollPagerTo(endPosition);
+            goToSlide(getCount());
         }
     }
 }

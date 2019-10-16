@@ -1,10 +1,34 @@
+/*
+ * MIT License
+ *
+ * Copyright (c) 2017 Jan Heinrich Reimer
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
+ */
+
 package com.heinrichreimersoftware.materialintro.view;
 
 import android.content.Context;
 import android.database.DataSetObserver;
 import android.os.Parcelable;
-import android.support.annotation.NonNull;
-import android.support.v4.view.PagerAdapter;
+import androidx.annotation.NonNull;
+import androidx.viewpager.widget.PagerAdapter;
 import android.util.AttributeSet;
 import android.view.View;
 import android.view.ViewGroup;
@@ -52,7 +76,7 @@ public class FadeableViewPager extends SwipeBlockableViewPager {
         super.setPageTransformer(reverseDrawingOrder, new PageTransformerWrapper(transformer, getAdapter()));
     }
 
-    private class OnPageChangeListenerWrapper implements OnPageChangeListener{
+    private class OnPageChangeListenerWrapper implements OnPageChangeListener {
         private final OnPageChangeListener listener;
 
         private OnPageChangeListenerWrapper(OnPageChangeListener listener) {
@@ -81,7 +105,7 @@ public class FadeableViewPager extends SwipeBlockableViewPager {
         }
     }
 
-    private class PagerAdapterWrapper extends PagerAdapter{
+    private class PagerAdapterWrapper extends PagerAdapter {
         private final PagerAdapter adapter;
 
         private PagerAdapterWrapper(PagerAdapter adapter) {
@@ -120,20 +144,20 @@ public class FadeableViewPager extends SwipeBlockableViewPager {
 
         @Override
         public Object instantiateItem(ViewGroup container, int position) {
-            if(position < adapter.getCount())
+            if (position < adapter.getCount())
                 return adapter.instantiateItem(container, position);
             return null;
         }
 
         @Override
         public void destroyItem(ViewGroup container, int position, Object object) {
-            if(position < adapter.getCount())
+            if (position < adapter.getCount())
                 adapter.destroyItem(container, position, object);
         }
 
         @Override
         public void setPrimaryItem(ViewGroup container, int position, Object object) {
-            if(position < adapter.getCount())
+            if (position < adapter.getCount())
                 adapter.setPrimaryItem(container, position, object);
         }
 
@@ -153,7 +177,7 @@ public class FadeableViewPager extends SwipeBlockableViewPager {
         @Deprecated
         @Override
         public Object instantiateItem(View container, int position) {
-            if(position < adapter.getCount())
+            if (position < adapter.getCount())
                 return adapter.instantiateItem(container, position);
             return null;
         }
@@ -162,7 +186,7 @@ public class FadeableViewPager extends SwipeBlockableViewPager {
         @Deprecated
         @Override
         public void destroyItem(View container, int position, Object object) {
-            if(position < adapter.getCount())
+            if (position < adapter.getCount())
                 adapter.destroyItem(container, position, object);
         }
 
@@ -170,7 +194,7 @@ public class FadeableViewPager extends SwipeBlockableViewPager {
         @Deprecated
         @Override
         public void setPrimaryItem(View container, int position, Object object) {
-            if(position < adapter.getCount())
+            if (position < adapter.getCount())
                 adapter.setPrimaryItem(container, position, object);
         }
 
@@ -210,20 +234,20 @@ public class FadeableViewPager extends SwipeBlockableViewPager {
 
         @Override
         public CharSequence getPageTitle(int position) {
-            if(position < adapter.getCount())
+            if (position < adapter.getCount())
                 return adapter.getPageTitle(position);
             return null;
         }
 
         @Override
         public float getPageWidth(int position) {
-            if(position < adapter.getCount())
+            if (position < adapter.getCount())
                 return adapter.getPageWidth(position);
             return 1f;
         }
     }
 
-    private class PageTransformerWrapper implements PageTransformer{
+    private class PageTransformerWrapper implements PageTransformer {
         private final PageTransformer pageTransformer;
         private final PagerAdapter adapter;
 
@@ -239,7 +263,8 @@ public class FadeableViewPager extends SwipeBlockableViewPager {
     }
 
 
-    public interface OnOverscrollPageChangeListener extends OnPageChangeListener {}
+    public interface OnOverscrollPageChangeListener extends OnPageChangeListener {
+    }
 
     public static class SimpleOnOverscrollPageChangeListener implements OnOverscrollPageChangeListener {
         @Override

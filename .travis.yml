@@ -1,15 +1,24 @@
 language: android
 android:
   components:
-  - tools
-  - platform-tools
-  - build-tools-24.0.1
-  - android-24
-  - extra-google-google_play_services
-  - extra-google-m2repository
-  - extra-android-m2repository
+    - tools
+    - platform-tools
+    - build-tools-25.0.2
+    - android-25
+    - extra-google-google_play_services
+    - extra-google-m2repository
+    - extra-android-m2repository
 jdk:
-- oraclejdk8
+  - oraclejdk8
+before_install:
+  - mkdir "${ANDROID_HOME}/licenses" || true
+  - echo -e "\nd56f5187479451eabf01fb78af6dfcb131a6481e" > "${ANDROID_HOME}/licenses/android-sdk-license"
+  - echo -e "\n8933bad161af4178b1185d1a37fbf41ea5269c55" > "${ANDROID_HOME}/licenses/android-sdk-license"
+  - echo -e "\n84831b9409646a918e30573bab4c9c91346d8abd" > "${ANDROID_HOME}/licenses/android-sdk-preview-license"
+  - sleep 10
+  - chmod +x gradlew
+  - echo yes | sdkmanager "extras;m2repository;com;android;support;constraint;constraint-layout;1.0.2"
+  - echo yes | sdkmanager "extras;m2repository;com;android;support;constraint;constraint-layout-solver;1.0.2"
+
 notifications:
-  slack:
-    secure: lf2X+YT/e8dKDMIGzmhzb6LiID7VvXpoylfLBuBT56hkzbCWFqQ94sEBzjU8Ha0o9JhH/CwME1sl3ZRWN5uRVJqzwD+spn03TQJ7wEd2pQCeONmRa3h8ulyvFtbB2F3gcfK/Yu22pEl6bPUOvf+niNgYO1G1w9hMW5IPMChqQzD7Hvw8vFNFcUmdMkCfRRx5IMML7LVJ6WuD8HTq9hhlyhGZXAoGOyzawIE0jzl0FddUAo1AR3p/wHOcYXlUYhAUGD9nRkhivhMiqaJQdtll8g0O5K9nZy6AKZm8nc99l9Ck7ktUvGz+8ESC665fvlbUrjJ470zvZebfNyVdj9u1JYFppZMqiRQ6gQn2j5ZxYlWupZEOHCMJJLLUa7LCz13ZpYYtu9elWwt/YQchZTmD8YwDGr5c7ly9W34rKqhBn0CsmnIEWQ27nTACBvB7ZupX/hq56LLPV1JqyUIEzEbRj4EIVLTKNNT2UEy5OTM9KROONRuIuHqJeuFDKMJvh7rNXXKbBUjIJP6/m5q8Kqf4tVRe8vDDBn1kz0tWToNNtICYL/JSWgztOf25750o1ZTF9uWtt0DZlt7GOOMGjex9A0Uob3jHQIsGvPYHqI5TUK7szKTrkRa14OIeM4KCq9PqBho4eFVtJjxuuBZqwheS9fpfEuwcehLLSUnGKgcdGSw=
+  slack: heinrichreimer:twzJpzYgSjWnT0QCIoMeIa7l
